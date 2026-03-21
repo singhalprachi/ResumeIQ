@@ -1,42 +1,27 @@
-import chromadb
-from chromadb.config import Settings as ChromaSettings
+"""
+In-memory vector store - works perfectly on Railway.
+No ChromaDB persistence issues.
+"""
+import logging
 from openai import AsyncOpenAI
 from app.core.config import settings
-import logging
 
 logger = logging.getLogger(__name__)
 
-_chroma_client = None
-_collection = None
 _openai_client = None
+# In-memory store: {session_id: [(chunk_text, embedding)]}
+_store: dict[str, list] = {}
 
 
 async def init_vectorstore():
-    global _chroma_client, _collection, _openai_client
-
+    global _openai_client
     _openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-
-    _chroma_client = chromadb.PersistentClient(
-        path=settings.CHROMA_PERSIST_DIR,
-        settings=ChromaSettings(anonymized_telemetry=False),
-    )
-
-    _collection = _chroma_client.get_or_create_collection(
-        name=settings.CHROMA_COLLECTION_NAME,
-        metadata={"hnsw:space": "cosine"},
-    )
-    logger.info(f"ChromaDB collection '{settings.CHROMA_COLLECTION_NAME}' ready.")
-
-
-def get_collection():
-    if _collection is None:
-        raise RuntimeError("Vector store not initialized. Call init_vectorstore() first.")
-    return _collection
+    logger.info("In-memory vector store ready.")
 
 
 def get_openai_client() -> AsyncOpenAI:
     if _openai_client is None:
-        raise RuntimeError("OpenAI client not initialized.")
+        raise RuntimeError("Vector store not initialized.")
     return _openai_client
 
 
@@ -50,41 +35,30 @@ async def embed_texts(texts: list[str]) -> list[list[float]]:
 
 
 async def upsert_chunks(session_id: str, chunks: list[str]):
-    """Embed and store resume chunks for a session."""
-    collection = get_collection()
     embeddings = await embed_texts(chunks)
-
-    ids = [f"{session_id}_chunk_{i}" for i in range(len(chunks))]
-    metadatas = [{"session_id": session_id, "chunk_index": i} for i in range(len(chunks))]
-
-    # Delete old chunks for this session if they exist
-    try:
-        existing = collection.get(where={"session_id": session_id})
-        if existing["ids"]:
-            collection.delete(ids=existing["ids"])
-    except Exception:
-        pass
-
-    collection.add(
-        ids=ids,
-        embeddings=embeddings,
-        documents=chunks,
-        metadatas=metadatas,
-    )
-    logger.info(f"Upserted {len(chunks)} chunks for session {session_id}")
+    _store[session_id] = list(zip(chunks, embeddings))
+    logger.info(f"Stored {len(chunks)} chunks for session {session_id}")
 
 
-async def retrieve_relevant_chunks(session_id: str, query: str, top_k: int = None) -> list[str]:
-    """Retrieve top-k resume chunks most relevant to the JD query."""
-    collection = get_collection()
+async def retrieve_relevant_chunks(
+    session_id: str, query: str, top_k: int = None
+) -> list[str]:
+    if session_id not in _store:
+        return []
+
     k = top_k or settings.TOP_K_CHUNKS
+    query_emb = (await embed_texts([query]))[0]
 
-    query_embedding = await embed_texts([query])
+    # Cosine similarity
+    def cosine(a, b):
+        dot = sum(x * y for x, y in zip(a, b))
+        na = sum(x ** 2 for x in a) ** 0.5
+        nb = sum(x ** 2 for x in b) ** 0.5
+        return dot / (na * nb + 1e-9)
 
-    results = collection.query(
-        query_embeddings=query_embedding,
-        n_results=min(k, collection.count()),
-        where={"session_id": session_id},
-    )
-
-    return results["documents"][0] if results["documents"] else []
+    scored = [
+        (cosine(query_emb, emb), chunk)
+        for chunk, emb in _store[session_id]
+    ]
+    scored.sort(reverse=True)
+    return [chunk for _, chunk in scored[:k]]
