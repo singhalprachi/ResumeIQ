@@ -17,7 +17,8 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: List[str] = [
         "http://localhost:5173",
         "http://localhost:3000",
-        "https://*.vercel.app",
+        "https://resumeiqu.netlify.app",
+        "https://www.resumeiqu.netlify.app",
     ]
 
     # ChromaDB
