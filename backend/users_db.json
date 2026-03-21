@@ -1,0 +1,11 @@
+{
+  "users": [
+    {
+      "id": "ef667748-da70-4f43-a8e2-256a0d3221db",
+      "name": "Prachi",
+      "email": "singhalprachi456@gmail.com",
+      "hashed_password": "$2b$12$Hu88bkwyHuqqeJ7g9MBlEeOgC9HU3CnqZeAISwK2KoS2NyQmnSDMm",
+      "created_at": "2026-03-21T19:51:48.360669"
+    }
+  ]
+}
