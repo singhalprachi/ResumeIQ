@@ -15,6 +15,14 @@ logger = logging.getLogger(__name__)
 # In-memory session store (for stateless Railway deployment)
 # For production scale, replace with Redis
 _session_store: dict[str, dict] = {}
+# ✅ ADD THESE TWO — OPTIONS preflight handlers
+@router.options("/upload-resume")
+async def upload_resume_options():
+    return JSONResponse(content={}, status_code=200)
+
+@router.options("/analyze")
+async def analyze_options():
+    return JSONResponse(content={}, status_code=200)
 
 
 @router.post("/upload-resume", summary="Upload and parse a resume")
