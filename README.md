@@ -116,13 +116,13 @@ App: http://localhost:5173
 ### Frontend → Vercel
 
 1. Push `frontend/` to GitHub
-2. Go to [vercel.com](https://vercel.com) → New Project → Import repo
+2. Go to [netlify.com](https://netlify.com) → New Project → Import repo
 3. Set root directory to `frontend/`
 4. Add environment variable:
    ```
    VITE_API_URL=https://your-backend.railway.app
    ```
-5. Deploy — Vercel handles the Vite build automatically
+5. Deploy — netlify handles the Vite build automatically
 
 ---
 
@@ -177,7 +177,7 @@ ats-analyzer/
     ├── package.json
     ├── vite.config.ts
     ├── tailwind.config.js
-    ├── vercel.json
+    ├── netlify.toml
     └── .env.example
 ```
 
