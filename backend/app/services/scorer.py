@@ -14,6 +14,10 @@ Key Hard Rules:
   - >50% bullets start with passive verbs → penalty on Impact
   - 30+ skills OR no grouping → Skill Architecture penalty
   - AI/generic phrasing → Human Authenticity penalty
+  - Missing Key Skills section → -15 pts Skill Architecture
+  - Wrong page length → -5 to -10 pts ATS Hygiene
+  - <3 or >6 bullets per role → penalty on Impact
+  - Filler/junk/ChatGPT prompt text → -15 pts Human Authenticity
 
 Score Calibration:
   Entry-level: average 58–68, strong 78–85
@@ -64,13 +68,20 @@ Score 0–100.
 
 ## 2. IMPACT & ACHIEVEMENT DEPTH — 25 points
 
-HARD PENALTY: If more than 50% of bullet points begin with: "Responsible for", "Worked on", "Helped in", "Assisted with" → major reduction.
+HARD PENALTY: If more than 50% of bullet points begin with:
+"Responsible for", "Worked on", "Helped in", "Assisted with" → major reduction.
 
 REWARD:
   - Quantified results (numbers, %, $, time saved)
   - Outcome language ("reduced latency by 40%")
   - Ownership verbs ("led", "architected", "owned", "launched")
   - Business effect visible
+
+BULLET COUNT RULE (per job/experience entry):
+  - Less than 3 bullets per role → "Too sparse, insufficient detail" → -8 pts
+  - More than 6 bullets per role → "Too verbose, hurts ATS readability" → -5 pts
+  - Ideal: 3–6 bullets per role
+  - Count bullets for EACH role and mention in section_scores feedback
 
 Score 0–100.
 
@@ -80,6 +91,11 @@ Score 0–100.
 
 NOT skill count. Skill STRUCTURE.
 
+MANDATORY: Resume MUST have a dedicated "Skills" or "Key Skills" section.
+  - Missing Skills section entirely → -15 pts on this dimension
+  - Skills must be grouped: Frontend / Backend / DevOps / Tools / Soft Skills
+  - Random ungrouped skill dump → additional penalty
+
 PENALTY if:
   - 30+ total skills listed
   - No logical grouping
@@ -87,7 +103,7 @@ PENALTY if:
 
 ALSO: Skill-to-experience ratio matters. 1 year experience + 28 tools = low credibility.
 
-REWARD: Grouped (Frontend/Backend/DevOps), technical skills weighted, soft skills < 15% of section.
+REWARD: Grouped skills, technical skills weighted higher, soft skills < 15% of section.
 
 Score 0–100.
 
@@ -109,12 +125,21 @@ Score 0–100.
 
 ## 5. HUMAN LANGUAGE & AUTHENTICITY — 10 points
 
-Detects "ChatGPT resume smell".
+Detects "ChatGPT resume smell" AND filler/junk text.
+
+FILLER & JUNK TEXT DETECTION (CRITICAL):
+  - ChatGPT prompt text visible in resume → SEVERE penalty -15 pts
+  - Lorem ipsum / placeholder text → SEVERE penalty -15 pts
+  - Template instructions left in resume (e.g. "Write your experience here") → HIGH priority flag
+  - Extra irrelevant text, repeated meaningless phrases → penalty
+  - If detected → report EXACTLY what filler text was found in improvement_suggestions
+  - Mark as HIGH priority with exact quote of filler text found
 
 PENALIZE:
   - Repeated sentence structures
   - Generic buzzwords: "dynamic", "passionate", "results-driven", "synergy", "leverage"
   - High abstraction, low specificity
+  - AI-generated phrasing patterns
 
 REWARD:
   - Sentence rhythm variation
@@ -127,11 +152,19 @@ Score 0–100.
 
 ## 6. ATS & STRUCTURE HYGIENE — 10 points
 
-  - Standard headers present
-  - No heavy table/column layouts
-  - Bullet consistency
-  - Clean date formatting
-  - Contact info complete
+PAGE LENGTH RULES (STRICT):
+  - Entry-level (0–2 years): MUST be 1 page → 2+ pages = -10 pts on this dimension
+  - Mid-level (2–5 years): 1–2 pages acceptable
+  - Senior (5+ years): Max 2 pages → 3+ pages = -5 pts on this dimension
+  - Estimate page count from content density and word count
+  - Flag page length violations in improvement_suggestions
+
+OTHER CHECKS:
+  - Standard section headers present (Summary, Experience, Education, Skills)
+  - No heavy table/column layouts that break ATS parsing
+  - Bullet point consistency throughout
+  - Clean and consistent date formatting
+  - Contact information complete (name, email, phone, LinkedIn)
 
 Score 0–100.
 
@@ -142,6 +175,22 @@ CALIBRATION (MUST FOLLOW)
 Entry-level: average = 58–68, strong = 78–85
 Mid-level: average = 60–72, strong = 80–88
 Do NOT inflate scores. 90+ is rare and exceptional.
+
+════════════════════════════════════════════
+SCORING IMPACT SUMMARY
+════════════════════════════════════════════
+
+| Rule                        | Penalty         | Dimension           |
+|-----------------------------|-----------------|---------------------|
+| No Profile Summary          | cap at 60 total | All dimensions      |
+| Missing Key Skills section  | -15 pts         | Skill Architecture  |
+| Entry-level > 1 page        | -10 pts         | ATS Hygiene         |
+| Senior > 2 pages            | -5 pts          | ATS Hygiene         |
+| <3 bullets per role         | -8 pts          | Impact & Achievement|
+| >6 bullets per role         | -5 pts          | Impact & Achievement|
+| Filler/ChatGPT prompt text  | -15 pts         | Human Authenticity  |
+| >50% passive bullet verbs   | major reduction | Impact & Achievement|
+| 30+ skills, no grouping     | reduction       | Skill Architecture  |
 
 ════════════════════════════════════════════
 OUTPUT — ONLY VALID JSON, NO MARKDOWN
@@ -163,7 +212,7 @@ OUTPUT — ONLY VALID JSON, NO MARKDOWN
       "section": "<dimension name>",
       "score": <weighted points earned, e.g. 16.5>,
       "max_score": <max weighted points, e.g. 20.0>,
-      "feedback": "<specific, honest feedback>",
+      "feedback": "<specific, honest feedback mentioning bullet counts, page length, skills section>",
       "suggestions": ["<concrete actionable fix>"]
     }
   ],
@@ -181,7 +230,7 @@ OUTPUT — ONLY VALID JSON, NO MARKDOWN
     {
       "priority": "<high|medium|low>",
       "category": "<Positioning|Impact|Skills|Experience|Authenticity|ATS|Keywords>",
-      "issue": "<specific problem>",
+      "issue": "<specific problem — mention exact bullet counts, page issues, filler text found>",
       "fix": "<exactly how to fix>",
       "example": "<rewritten example>"
     }
@@ -191,7 +240,7 @@ OUTPUT — ONLY VALID JSON, NO MARKDOWN
   "experience_level_match": "<Matches|Overqualified|Underqualified>",
   "top_strengths": ["<specific strength>"],
   "top_weaknesses": ["<specific weakness>"],
-  "hard_caps_applied": ["<any hard caps triggered>"]
+  "hard_caps_applied": ["<any hard caps triggered e.g. 'No summary: capped at 60', 'Missing skills section: -15 pts', 'Entry-level resume is 2 pages: -10 pts ATS'>"]
 }
 """
 
@@ -250,7 +299,14 @@ async def run_ats_analysis(
 
 ## DETECTED SECTIONS: {json.dumps(list(resume_sections.keys()))}
 
-Score using the 6-dimension SOP. Apply all hard caps. Return ONLY JSON.
+Analyze this resume carefully:
+1. Count bullet points per each job/experience role
+2. Estimate page length from content density
+3. Check for dedicated Skills/Key Skills section
+4. Scan for any filler text, ChatGPT prompts, or placeholder content
+5. Apply all penalties and hard caps as specified in the rubric
+
+Return ONLY valid JSON — no markdown, no explanation outside JSON.
 """
 
     logger.info(f"GPT-4o analysis for session {session_id}")
