@@ -19,6 +19,7 @@ class Settings(BaseSettings):
         "http://localhost:3000",
         "https://resumeiqu.netlify.app",
         "https://www.resumeiqu.netlify.app",
+        "https://69e750579d0a3d597e8080f1--resumeiqu.netlify.app",
     ]
 
     # ChromaDB
