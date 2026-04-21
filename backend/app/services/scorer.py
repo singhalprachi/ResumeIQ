@@ -259,6 +259,7 @@ async def run_ats_analysis(
     full_resume_text: str,
     resume_sections: dict,
     job_description: str,
+    page_count: int = 1,
 ) -> AnalysisResponse:
     client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
 
@@ -281,9 +282,11 @@ async def run_ats_analysis(
 
 ## DETECTED SECTIONS: {json.dumps(list(resume_sections.keys()))}
 
+## ACTUAL PAGE COUNT: {page_count} pages (use this exact count, do not estimate)
+
 Analyze this resume carefully:
 1. Count bullet points per each job/experience role
-2. Estimate page length from content density
+2. Use the ACTUAL PAGE COUNT provided above (do not estimate from content)
 3. Check for dedicated Skills/Key Skills section
 4. Scan for any filler text, ChatGPT prompts, or placeholder content
 5. Apply all penalties and hard caps as specified in the rubric

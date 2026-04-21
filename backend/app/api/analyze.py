@@ -65,6 +65,7 @@ async def upload_resume(file: UploadFile = File(...)):
         "sections": sections,
         "filename": file.filename,
         "chunks_count": len(chunks),
+        "page_count": page_count,
     }
 
     logger.info(f"Resume uploaded: session={session_id}, chunks={len(chunks)}, file={file.filename}")
@@ -104,6 +105,7 @@ async def analyze_resume(request: AnalysisRequest):
             full_resume_text=session["full_text"],
             resume_sections=session["sections"],
             job_description=request.job_description,
+            page_count=session.get("page_count", 1),
         )
     except ValueError as e:
         raise HTTPException(status_code=500, detail=str(e))
