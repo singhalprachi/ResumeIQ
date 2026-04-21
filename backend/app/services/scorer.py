@@ -284,12 +284,21 @@ async def run_ats_analysis(
 
 ## ACTUAL PAGE COUNT: {page_count} pages (use this exact count, do not estimate)
 
+CANDIDATE LEVEL DETERMINATION:
+Analyze the RESUME (not JD) to determine candidate's actual experience level:
+- Entry-level (0-2 years): Resume is 1 page OR mentions 0-2 years experience (recent graduates, internships, first jobs)
+- Mid-level (2-5 years): Resume is 2 pages AND mentions 2-5 years experience (most common for professionals)
+- Senior (5+ years): Resume is 2 pages AND mentions 5+ years experience (senior/lead roles, leadership)
+
+Look for experience indicators in resume: "2 years", "3+ years", "Since 2021", job titles (Junior, Associate, Senior, Lead), total career duration.
+
 Analyze this resume carefully:
-1. Count bullet points per each job/experience role
-2. Use the ACTUAL PAGE COUNT provided above (do not estimate from content)
-3. Check for dedicated Skills/Key Skills section
-4. Scan for any filler text, ChatGPT prompts, or placeholder content
-5. Apply all penalties and hard caps as specified in the rubric
+1. Determine candidate level from page count + experience years mentioned in resume
+2. Count bullet points per each job/experience role
+3. Use the ACTUAL PAGE COUNT provided above (do not estimate from content)
+4. Check for dedicated Skills/Key Skills section
+5. Scan for any filler text, ChatGPT prompts, or placeholder content
+6. Apply all penalties and hard caps as specified in the rubric
 
 Return ONLY valid JSON - no markdown, no explanation outside JSON.
 """
