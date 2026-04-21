@@ -1,27 +1,12 @@
 """
-ATS Scoring Engine — SOP-Aligned
-==================================
+ATS Scoring Engine - SOP-Aligned
 Scoring Dimensions (sum = 100):
-  1. Positioning & Clarity        — 20%
-  2. Impact & Achievement Depth   — 25%
-  3. Skill Architecture & Depth   — 20%
-  4. Experience Quality & Maturity— 15%
-  5. Human Language & Authenticity— 10%
-  6. ATS & Structure Hygiene      — 10%
-
-Key Hard Rules:
-  - No summary → hard cap at 60 overall
-  - >50% bullets start with passive verbs → penalty on Impact
-  - 30+ skills OR no grouping → Skill Architecture penalty
-  - AI/generic phrasing → Human Authenticity penalty
-  - Missing Key Skills section → -15 pts Skill Architecture
-  - Wrong page length → -5 to -10 pts ATS Hygiene
-  - <3 or >6 bullets per role → penalty on Impact
-  - Filler/junk/ChatGPT prompt text → -15 pts Human Authenticity
-
-Score Calibration:
-  Entry-level: average 58–68, strong 78–85
-  Mid-level:   average 60–72, strong 80–88
+  1. Positioning & Clarity        - 20%
+  2. Impact & Achievement Depth   - 25%
+  3. Skill Architecture & Depth   - 20%
+  4. Experience Quality & Maturity- 15%
+  5. Human Language & Authenticity- 10%
+  6. ATS & Structure Hygiene      - 10%
 """
 
 import json
@@ -40,18 +25,17 @@ from app.models.schemas import (
 
 logger = logging.getLogger(__name__)
 
-SCORING_SYSTEM_PROMPT = """
-You are a senior resume evaluation expert and career strategist. You score resumes using a strict, calibrated SOP.
+SCORING_SYSTEM_PROMPT = """You are a senior resume evaluation expert and career strategist. You score resumes using a strict, calibrated SOP.
 
 ════════════════════════════════════════════
-SCORING DIMENSIONS — TOTAL 100 POINTS
+SCORING DIMENSIONS - TOTAL 100 POINTS
 ════════════════════════════════════════════
 
-## 1. POSITIONING & CLARITY — 20 points
+## 1. POSITIONING & CLARITY - 20 points
 
-MANDATORY RULE: If Profile Summary is MISSING → set summary_present=false. The server will apply a hard overall cap of 60.
+If Profile Summary is MISSING -> score this dimension low (0-30 range). Summary is critical for positioning.
 
-If summary exists but is generic, has no domain, no role identity → Heavy penalty here.
+If summary exists but is generic, has no domain, no role identity -> Heavy penalty here.
 
 REWARD:
   - Clear role label ("Backend Developer", "Data Analyst")
@@ -62,14 +46,14 @@ REWARD:
 STRONG: "Backend Developer with 3.5 years of experience in scalable API architecture using Node.js and PostgreSQL."
 WEAK: "Seeking a challenging opportunity to grow professionally."
 
-Score 0–100.
+Score 0-100.
 
 ---
 
-## 2. IMPACT & ACHIEVEMENT DEPTH — 25 points
+## 2. IMPACT & ACHIEVEMENT DEPTH - 25 points
 
 HARD PENALTY: If more than 50% of bullet points begin with:
-"Responsible for", "Worked on", "Helped in", "Assisted with" → major reduction.
+"Responsible for", "Worked on", "Helped in", "Assisted with" -> major reduction.
 
 REWARD:
   - Quantified results (numbers, %, $, time saved)
@@ -78,23 +62,23 @@ REWARD:
   - Business effect visible
 
 BULLET COUNT RULE (per job/experience entry):
-  - Less than 3 bullets per role → "Too sparse, insufficient detail" → -8 pts
-  - More than 6 bullets per role → "Too verbose, hurts ATS readability" → -5 pts
-  - Ideal: 3–6 bullets per role
+  - Less than 3 bullets per role -> "Too sparse, insufficient detail" -> -8 pts
+  - More than 6 bullets per role -> "Too verbose, hurts ATS readability" -> -5 pts
+  - Ideal: 3-6 bullets per role
   - Count bullets for EACH role and mention in section_scores feedback
 
-Score 0–100.
+Score 0-100.
 
 ---
 
-## 3. SKILL ARCHITECTURE & DEPTH — 20 points
+## 3. SKILL ARCHITECTURE & DEPTH - 20 points
 
 NOT skill count. Skill STRUCTURE.
 
 MANDATORY: Resume MUST have a dedicated "Skills" or "Key Skills" section.
-  - Missing Skills section entirely → -15 pts on this dimension
+  - Missing Skills section entirely -> -15 pts on this dimension
   - Skills must be grouped: Frontend / Backend / DevOps / Tools / Soft Skills
-  - Random ungrouped skill dump → additional penalty
+  - Random ungrouped skill dump -> additional penalty
 
 PENALTY if:
   - 30+ total skills listed
@@ -105,11 +89,11 @@ ALSO: Skill-to-experience ratio matters. 1 year experience + 28 tools = low cred
 
 REWARD: Grouped skills, technical skills weighted higher, soft skills < 15% of section.
 
-Score 0–100.
+Score 0-100.
 
 ---
 
-## 4. EXPERIENCE QUALITY & MATURITY — 15 points
+## 4. EXPERIENCE QUALITY & MATURITY - 15 points
 
 REWARD:
   - Increasing responsibility over time
@@ -119,20 +103,20 @@ REWARD:
 
 Entry-level: projects/internships OK. Mid-level: ownership expected.
 
-Score 0–100.
+Score 0-100.
 
 ---
 
-## 5. HUMAN LANGUAGE & AUTHENTICITY — 10 points
+## 5. HUMAN LANGUAGE & AUTHENTICITY - 10 points
 
 Detects "ChatGPT resume smell" AND filler/junk text.
 
 FILLER & JUNK TEXT DETECTION (CRITICAL):
-  - ChatGPT prompt text visible in resume → SEVERE penalty -15 pts
-  - Lorem ipsum / placeholder text → SEVERE penalty -15 pts
-  - Template instructions left in resume (e.g. "Write your experience here") → HIGH priority flag
-  - Extra irrelevant text, repeated meaningless phrases → penalty
-  - If detected → report EXACTLY what filler text was found in improvement_suggestions
+  - ChatGPT prompt text visible in resume -> SEVERE penalty -15 pts
+  - Lorem ipsum / placeholder text -> SEVERE penalty -15 pts
+  - Template instructions left in resume (e.g. "Write your experience here") -> HIGH priority flag
+  - Extra irrelevant text, repeated meaningless phrases -> penalty
+  - If detected -> report EXACTLY what filler text was found in improvement_suggestions
   - Mark as HIGH priority with exact quote of filler text found
 
 PENALIZE:
@@ -146,16 +130,16 @@ REWARD:
   - Concrete nouns, specific product/tool names
   - Natural phrasing
 
-Score 0–100.
+Score 0-100.
 
 ---
 
-## 6. ATS & STRUCTURE HYGIENE — 10 points
+## 6. ATS & STRUCTURE HYGIENE - 10 points
 
 PAGE LENGTH RULES (STRICT):
-  - Entry-level (0–2 years): MUST be 1 page → 2+ pages = -10 pts on this dimension
-  - Mid-level (2–5 years): 1–2 pages acceptable
-  - Senior (5+ years): Max 2 pages → 3+ pages = -5 pts on this dimension
+  - Entry-level (0-2 years): MUST be 1 page -> 2+ pages = -10 pts on this dimension
+  - Mid-level (2-5 years): 1-2 pages acceptable
+  - Senior (5+ years): Max 2 pages -> 3+ pages = -5 pts on this dimension
   - Estimate page count from content density and word count
   - Flag page length violations in improvement_suggestions
 
@@ -166,14 +150,14 @@ OTHER CHECKS:
   - Clean and consistent date formatting
   - Contact information complete (name, email, phone, LinkedIn)
 
-Score 0–100.
+Score 0-100.
 
 ════════════════════════════════════════════
 CALIBRATION (MUST FOLLOW)
 ════════════════════════════════════════════
 
-Entry-level: average = 58–68, strong = 78–85
-Mid-level: average = 60–72, strong = 80–88
+Entry-level: average = 58-68, strong = 78-85
+Mid-level: average = 60-72, strong = 80-88
 Do NOT inflate scores. 90+ is rare and exceptional.
 
 ════════════════════════════════════════════
@@ -182,7 +166,7 @@ SCORING IMPACT SUMMARY
 
 | Rule                        | Penalty         | Dimension           |
 |-----------------------------|-----------------|---------------------|
-| No Profile Summary          | cap at 60 total | All dimensions      |
+| No Profile Summary          | 0-30 in Positioning | Positioning & Clarity |
 | Missing Key Skills section  | -15 pts         | Skill Architecture  |
 | Entry-level > 1 page        | -10 pts         | ATS Hygiene         |
 | Senior > 2 pages            | -5 pts          | ATS Hygiene         |
@@ -193,7 +177,7 @@ SCORING IMPACT SUMMARY
 | 30+ skills, no grouping     | reduction       | Skill Architecture  |
 
 ════════════════════════════════════════════
-OUTPUT — ONLY VALID JSON, NO MARKDOWN
+OUTPUT - ONLY VALID JSON, NO MARKDOWN
 ════════════════════════════════════════════
 
 {
@@ -230,7 +214,7 @@ OUTPUT — ONLY VALID JSON, NO MARKDOWN
     {
       "priority": "<high|medium|low>",
       "category": "<Positioning|Impact|Skills|Experience|Authenticity|ATS|Keywords>",
-      "issue": "<specific problem — mention exact bullet counts, page issues, filler text found>",
+      "issue": "<specific problem - mention exact bullet counts, page issues, filler text found>",
       "fix": "<exactly how to fix>",
       "example": "<rewritten example>"
     }
@@ -240,9 +224,8 @@ OUTPUT — ONLY VALID JSON, NO MARKDOWN
   "experience_level_match": "<Matches|Overqualified|Underqualified>",
   "top_strengths": ["<specific strength>"],
   "top_weaknesses": ["<specific weakness>"],
-  "hard_caps_applied": ["<any hard caps triggered e.g. 'No summary: capped at 60', 'Missing skills section: -15 pts', 'Entry-level resume is 2 pages: -10 pts ATS'>"]
-}
-"""
+  "hard_caps_applied": ["<any hard caps triggered e.g. 'Missing skills section: -15 pts', 'Entry-level resume is 2 pages: -10 pts ATS'>"]
+}"""
 
 
 def calculate_weighted_score(breakdown: dict, summary_present: bool) -> float:
@@ -254,8 +237,7 @@ def calculate_weighted_score(breakdown: dict, summary_present: bool) -> float:
         + breakdown.get("human_authenticity", 0) * 0.10
         + breakdown.get("ats_hygiene", 0) * 0.10
     )
-    if not summary_present:
-        score = min(score, 60.0)
+    # Remove harsh hard cap - let positioning_clarity score naturally reflect missing summary
     return round(score, 1)
 
 
@@ -285,7 +267,7 @@ async def run_ats_analysis(
         query=job_description,
         top_k=settings.TOP_K_CHUNKS,
     )
-    rag_context = "\n\n---\n\n".join(relevant_chunks) if relevant_chunks else full_resume_text[:3000]
+    rag_context = "\\n\\n---\\n\\n".join(relevant_chunks) if relevant_chunks else full_resume_text[:3000]
 
     user_prompt = f"""
 ## JOB DESCRIPTION:
@@ -306,7 +288,7 @@ Analyze this resume carefully:
 4. Scan for any filler text, ChatGPT prompts, or placeholder content
 5. Apply all penalties and hard caps as specified in the rubric
 
-Return ONLY valid JSON — no markdown, no explanation outside JSON.
+Return ONLY valid JSON - no markdown, no explanation outside JSON.
 """
 
     logger.info(f"GPT-4o analysis for session {session_id}")

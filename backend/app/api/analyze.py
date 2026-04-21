@@ -48,7 +48,7 @@ async def upload_resume(file: UploadFile = File(...)):
 
     # Parse document
     try:
-        full_text, sections = parse_document(file_bytes, file.content_type)
+        full_text, sections, page_count = parse_document(file_bytes, file.content_type)
     except ValueError as e:
         raise HTTPException(status_code=422, detail=str(e))
 
@@ -72,7 +72,7 @@ async def upload_resume(file: UploadFile = File(...)):
     return {
         "session_id": session_id,
         "filename": file.filename,
-        "pages_detected": full_text.count("\n\n"),
+        "pages_detected": page_count,
         "sections_detected": list(sections.keys()),
         "chunks_indexed": len(chunks),
         "message": "Resume parsed and indexed successfully. Ready for analysis.",

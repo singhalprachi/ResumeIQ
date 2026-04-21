@@ -8,11 +8,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def extract_text_from_pdf(file_bytes: bytes) -> str:
-    """Extract text from PDF preserving structure."""
+def extract_text_from_pdf(file_bytes: bytes) -> tuple[str, int]:
+    """Extract text from PDF preserving structure. Returns (text, page_count)."""
     text_parts = []
+    page_count = 0
     try:
         with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
+            page_count = len(pdf.pages)
             for page in pdf.pages:
                 page_text = page.extract_text(layout=True)
                 if page_text:
@@ -22,11 +24,11 @@ def extract_text_from_pdf(file_bytes: bytes) -> str:
         raise ValueError(f"Could not parse PDF: {str(e)}")
 
     full_text = "\n\n".join(text_parts)
-    return clean_text(full_text)
+    return clean_text(full_text), page_count
 
 
-def extract_text_from_docx(file_bytes: bytes) -> str:
-    """Extract text from DOCX preserving paragraph structure."""
+def extract_text_from_docx(file_bytes: bytes) -> tuple[str, int]:
+    """Extract text from DOCX preserving paragraph structure. Returns (text, estimated_page_count)."""
     try:
         doc = docx.Document(io.BytesIO(file_bytes))
         paragraphs = []
@@ -46,7 +48,12 @@ def extract_text_from_docx(file_bytes: bytes) -> str:
         raise ValueError(f"Could not parse DOCX: {str(e)}")
 
     full_text = "\n".join(paragraphs)
-    return clean_text(full_text)
+    
+    # Estimate page count for DOCX based on word count (approx 400-500 words per page)
+    word_count = len(full_text.split())
+    estimated_page_count = max(1, round(word_count / 450))
+    
+    return clean_text(full_text), estimated_page_count
 
 
 def clean_text(text: str) -> str:
@@ -114,14 +121,14 @@ def detect_resume_sections(text: str) -> dict[str, str]:
     return {k: "\n".join(v).strip() for k, v in sections.items() if v}
 
 
-def parse_document(file_bytes: bytes, content_type: str) -> Tuple[str, dict[str, str]]:
+def parse_document(file_bytes: bytes, content_type: str) -> Tuple[str, dict[str, str], int]:
     """
-    Main entry point. Returns (full_text, sections_dict).
+    Main entry point. Returns (full_text, sections_dict, page_count).
     """
     if "pdf" in content_type:
-        full_text = extract_text_from_pdf(file_bytes)
+        full_text, page_count = extract_text_from_pdf(file_bytes)
     elif "wordprocessingml" in content_type or "docx" in content_type:
-        full_text = extract_text_from_docx(file_bytes)
+        full_text, page_count = extract_text_from_docx(file_bytes)
     else:
         raise ValueError(f"Unsupported file type: {content_type}")
 
@@ -129,4 +136,4 @@ def parse_document(file_bytes: bytes, content_type: str) -> Tuple[str, dict[str,
         raise ValueError("Could not extract meaningful text from document. Please check the file.")
 
     sections = detect_resume_sections(full_text)
-    return full_text, sections
+    return full_text, sections, page_count
